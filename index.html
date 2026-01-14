@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo Wii Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        :root { --wsp: #25d366; --dark: #1a1a1a; --blue: #0070d2; --mail: #e74c3c; --fb: #0084ff; --warn: #f39c12; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f4f4; margin: 0; padding-bottom: 200px; scroll-behavior: smooth; }
+        
+        /* HEADER ULTRA COMPACTO */
+        header { 
+            background: var(--dark); color: white; text-align: center; 
+            padding: 8px 5px; position: sticky; top: 0; z-index: 1000; 
+            border-bottom: 2px solid var(--blue); 
+        }
+        header h1 { font-size: 1rem; margin: 0 0 5px 0; letter-spacing: 1px; }
+        
+        .controles { 
+            display: flex; flex-direction: row; gap: 5px; 
+            max-width: 600px; margin: auto; padding: 0 5px; 
+        }
+        #buscador { 
+            flex: 1.5; padding: 8px 12px; border-radius: 15px; border: none; 
+            font-size: 0.85rem; outline: none; box-shadow: inset 0 1px 3px rgba(0,0,0,0.2); 
+        }
+        #ordenar { 
+            flex: 1.2; padding: 8px 5px; border-radius: 15px; border: none; 
+            background: white; font-weight: bold; cursor: pointer; font-size: 0.75rem; 
+            color: var(--dark);
+        }
+
+        /* CONTENEDOR DE JUEGOS */
+        .contenedor { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; padding: 10px; max-width: 1100px; margin: 0 auto; }
+        
+        .card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1); display: flex; flex-direction: column; border: 1px solid #eee; }
+        .image-container { width: 100%; height: 180px; background: #fff; display: flex; align-items: center; justify-content: center; padding: 5px; box-sizing: border-box; }
+        .card img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        
+        .info { padding: 6px; flex-grow: 1; text-align: center; }
+        .info h3 { font-size: 0.75rem; margin: 3px 0; height: 30px; overflow: hidden; color: #222; line-height: 1.1; }
+        .peso-tag { font-size: 0.65rem; font-weight: bold; color: var(--blue); background: #eef6ff; padding: 1px 6px; border-radius: 8px; }
+        
+        .btn-add { background: var(--blue); color: white; border: none; padding: 8px; font-weight: bold; cursor: pointer; width: 100%; font-size: 0.8rem; }
+        .btn-add.selected { background: #e74c3c; }
+
+        /* PANEL LATERAL DE SELECCIÓN */
+        .panel-seleccion {
+            position: fixed; right: 10px; top: 90px; width: 180px; max-height: 25vh;
+            background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: flex; flex-direction: column; z-index: 1500; border: 2px solid var(--blue); overflow: hidden;
+        }
+        .panel-header { background: var(--blue); color: white; padding: 5px; text-align: center; font-weight: bold; font-size: 0.7rem; }
+        .lista-visible { overflow-y: auto; padding: 4px; flex-grow: 1; }
+        .item-mini { display: flex; justify-content: space-between; align-items: center; padding: 3px; border-bottom: 1px solid #eee; font-size: 0.6rem; }
+        .btn-del-mini { color: #e74c3c; border: none; background: none; font-weight: bold; cursor: pointer; }
+
+        /* BARRA INFERIOR */
+        .carrito-float { 
+            position: fixed; bottom: 0; width: 100%; background: white; 
+            padding: 10px 0; box-shadow: 0 -3px 15px rgba(0,0,0,0.1); 
+            display: flex; flex-direction: column; align-items: center; z-index: 2000; 
+            border-radius: 15px 15px 0 0; 
+        }
+        .stats-total { font-size: 0.85rem; font-weight: bold; margin-bottom: 2px; }
+        .info-pago { color: #27ae60; font-weight: 800; font-size: 0.95rem; margin-bottom: 4px; }
+        
+        .aviso-minimo { font-size: 0.75rem; font-weight: 800; margin-bottom: 8px; text-align: center; }
+        
+        .botones-fila { display: flex; flex-direction: row; gap: 8px; width: 95%; max-width: 500px; justify-content: center; }
+        
+        .btn-final { 
+            flex: 1; border: none; padding: 8px 5px; border-radius: 20px; 
+            font-weight: bold; color: white; font-size: 0.65rem; 
+            text-align: center; display: flex; align-items: center; justify-content: center; 
+            gap: 5px; min-height: 36px; cursor: pointer; transition: 0.2s;
+        }
+        
+        .btn-final:disabled { background: #ccc !important; color: #888 !important; cursor: not-allowed; opacity: 0.6; }
+        .btn-mail { background: var(--mail); }
+        .btn-wsp { background: var(--wsp); }
+        .btn-fb { background: var(--fb); }
+
+        #btn-arriba { position: fixed; bottom: 180px; left: 10px; background: var(--dark); color: white; border: none; width: 35px; height: 35px; border-radius: 50%; display: none; z-index: 2500; cursor: pointer;}
+
+        @media (max-width: 600px) {
+            .panel-seleccion { width: 80%; right: 10%; top: auto; bottom: 165px; max-height: 55px; }
+        }
+    </style>
+</head>
+<body>
+
+<button id="btn-arriba" onclick="volverArriba()">↑</button>
+
+<header id="top">
+    <h1>🎮 CATÁLOGO WII</h1>
+    <div class="controles">
+        <input type="text" id="buscador" placeholder="🔍 Buscar juego..." onkeyup="filtrarYOrdenar()">
+        <select id="ordenar" onchange="filtrarYOrdenar()">
+            <option value="az">Ordenar: A-Z</option>
+            <option value="za">Ordenar: Z-A</option>
+            <option value="peso-asc">Peso: Menor a Mayor</option>
+            <option value="peso-desc">Peso: Mayor a Menor</option>
+        </select>
+    </div>
+</header>
+
+<div class="panel-seleccion" id="panelSeleccion" style="display: none;">
+    <div class="panel-header">LISTA ACTUAL</div>
+    <div class="lista-visible" id="listaDerecha"></div>
+</div>
+
+<div class="contenedor" id="catalogo"></div>
+
+<div class="carrito-float">
+    <div class="stats-total">Juegos: <span id="cant">0</span> | <span id="peso-display">0 MB</span></div>
+    <div id="memoria-info" class="info-pago">Selecciona tus juegos</div>
+    
+    <div id="status-envio" class="aviso-minimo" style="color: var(--warn);">⚠️ Mínimo 5 juegos para enviar</div>
+    
+    <div class="botones-fila">
+        <form action="https://formspree.io/f/xykkyrok" method="POST" id="miFormulario" style="flex:1; display:flex;">
+            <textarea name="LISTA" id="listaOculta" style="display:none;"></textarea>
+            <button type="submit" id="btn-envio-mail" class="btn-final btn-mail" style="width:100%;" disabled>
+                <i class="fa-solid fa-envelope"></i> CORREO
+            </button>
+        </form>
+
+        <button id="btn-envio-wsp" class="btn-final btn-wsp" onclick="enviarPedido('wsp')" disabled>
+            <i class="fa-brands fa-whatsapp"></i> WHATS
+        </button>
+
+        <button id="btn-envio-fb" class="btn-final btn-fb" onclick="enviarPedido('fb')" disabled>
+            <i class="fa-brands fa-facebook-messenger"></i> FB
+        </button>
+    </div>
+</div>
+
+<script>
+    const numeroTel = "525660427663";
+    const rawData = `Angry Birds Trilogy|SAWP52|936
+Animal Crossing Wii|RUUE01|324
+Armageddon|RKMP5D|3930
+Avatar 06|RLVE78|996
+Back to the Future The Game|S5BPKM|1076
+Batman: The Brave and the Bold|S3BPWR|2660
+Ben 10 Omniverse|S5TPAF|4376
+Bomberman Land Wii|RBBP99|1516
+Boom Street|ST7P01|950
+Bully: Scholarship Edition|RB7P54|3384
+Call of Duty: Black Ops|SC7S52|4266
+Call of Duty: World At War|RVYE52|2760
+Call of Duty Modern Warfare Reflex|RJAX52|4054
+Captain America: Super Soldier|SFQP8P|1868
+Cartoon Network: Punch Time Explosion|SQLPGN|2478
+Conduit 2|SC2P8P|4280
+Cooking Mama: WORLD KITCHEN|RWKE5G|522
+Crash: Mind over Mutant|RC8E7D|2672
+DEADRISING|RINE08|3218
+DeadSpace|RZJP69|4390
+Disney Epic Mickey 2: The Power of 2|SERE4Q|4338
+Disney Epic Mickey|SEME4Q|3992
+Disney Universe |SDXP4Q|2756
+Donkey Kong: Barrel Blast|RDKE01|424
+Donkey Kong Country Returns|SF8E01|3412
+Dragon Ball Z: Budokai Tenkaichi 2|RDBE70|3940
+Dragon Ball Z Budokai Tenkaichi 3|RDSE70|3304
+DragonBall|R7GPAF|2572
+Driver San Francisco|SDVE41|3960
+El Padrino: El Chantaje|RGFS69|3178
+FIFA 15|SQVE69|4020
+Godzilla: Unleashed|RGZE70|1794
+Guitar Hero: World Tour|SXAE52|4030
+Guitar Hero 3|RGHE52|4044
+Guitar Hero Metallica|SXBE52|4388
+H.A.W.X. 2|RTAP41|4370
+Harvest Moon: Animal Parade|RBIP99|2146
+James Bond: Golden Eye|SJBE52|3754
+Just Dance 2015|SE3E41|3420
+Just Dance 2016|SJNE41|4028
+Just Dance 2017|SZ7E41|4000
+Just Dance 2018|SE8P41|4278
+Just Dance 2019|S5EE41|4064
+Just Dance 3|SJDE41|3762
+Just Dance Disney Party|SJ6E41|4312
+Kirby Wii|SUKE01|1194
+Kirby's Dream Collection Special Edition|S72E01|2010
+Kirby's Epic Yarn|RK5E01|3832
+KLONOA|R96EAF|1636
+KOF:The Orochi Saga|RKFEH4|2260
+LEGO Batman|RLBEWR|2712
+LEGO CloneWars|SC4P64|2386
+LEGO Harry Potter|R25PWR|3286
+LEGO Harry2|SLHEWR|3348
+LEGO Indiana Jones: The Original Adventures|RLIP64|2194
+LEGO LOTR|SLRPWR|3726
+LEGO Star Wars|RLGE64|3040
+LEGO SuperHeroes1|S7APWR|2790
+Lord of the Rings: Aragorn's Quest|R8JEWR|2652
+MANHUNT 2|RHTE54|3440
+MARIO & SONIC OLYMPIC GAMES|RWSP8P|2144
+MARIO & SONIC WINTER GAMES|ROLP8P|3636
+Mario & Sonic LONDON|SIIE8P|4078
+Mario Kart 64|RMCERE|1082
+Mario Party 8|RM8E01|1392
+Mario Party 9|SSQE01|794
+MARIO SPORTS MIX|RMKE01|2322
+Mario Strikers Charged|R4QE01|2022
+Mario Super Sluggers|RMBE01|1438
+MarioKartWii|RMCE01|2844
+MarioTennisGC|RMAP01|1646
+Marvel Super Hero Squad|R38X78|3478
+Marvel Ultimate Alliance 2|RMSP52|2402
+Marvel Ultimate Alliance|RMUE52|4212
+METAL SLUG Anthology|RMLEH4|1570
+Metroid: Other M|R3OE01|7616
+Metroid Prime 3: Corruption|RM3E01|4218
+Metroid Prime Trilogy|R3MP01|7732
+MICHAEL JACKSON EXPERIENCE|SMOY41|4012
+Modern Warfare 3|SM8S52|4390
+Monster Hunter Tri|RMHE08|2892
+MURAMASA: THE DEMON BLADE|RSFP99|850
+Need for Speed Carbon|RNSP69|3026
+New SUPER MARIO BROS. Wii Remix|MRRP01|520
+New SUPER MARIO BROS. Wii|SMNE01|350
+Newer Super Mario World|SMWP01|854
+NFS11|SNHP69|1314
+NFSTheRun|SNVP69|1050
+No More Heroes 2|RUYP99|3822
+Okami|ROWP08|4168
+Order Up!|ROXE20|2112
+Pandora's Tower|SX3EXJ|3134
+PIKMIN 2|R92E01|2124
+Pokemon Battle Revolution|RPBE01|1152
+PokePark Wii|R8AP01|2254
+PokePark Wii 2|S2LP01|1698
+PRINCE OF PERSIA RIVAL SWORDS|RPPE41|1462
+Prince of Persia Forgotten Sands|RPWZ41|3578
+Project Zero 2|SL2P01|4350
+Punch Out|R7PE01|3726
+Ratatouille|RLWE78|1290
+Rayman Origins|SOJE41|3522
+Rayman Raving Rabbids|RRBE41|1656
+Red Steel 2|RD2X41|3234
+Resident Evil 4|RB4P08|4064
+RESIDENT EVIL DARKSIDE|SBDP08|3984
+Resident Evil Umbrella Chronicles|RBUP08|3982
+Resident Evil Zero|RBHP08|3660
+Resident Evil|RE4P08|2628
+Rock Band 3|SZBP69|4114
+SambaDeAmigo|R3BP8P|3300
+Scarface|RSCP7D|3988
+Sherlock Holmes|SSHPHH|2150
+Silent Hill: Shattered Memories|R5WEA4|3842
+Simpsons|RSNP69|2662
+SNK ARCADE CLASSICS 1|RNCEH4|2624
+Sonic & Sega Racing|R3RE8P|2784
+SONIC AND SECRET RINGS|RSRP8P|3664
+Sonic Colors|SNCE8P|3764
+Sonic Unleashed|RSVE8P|3896
+Spider-Man: Edge of Time|SQMP52|1772
+Spider-Man: Web of Shadows|R3SP52|4180
+SpongeBob|SVDP52|1150
+SPORTS PACK REVOLUTION|RSPE01|320
+Star Wars: Force Unleashed 2|SF2P64|4160
+Star Wars: Force Unleashed|RSTP64|4340
+Super Mario Bros. 3+|SM3E01|538
+Super Mario Collection|SVME01|16
+SUPER MARIO GALAXY MORE|SB4E01|1322
+SUPER MARIO GALAXY|RMGE01|3344
+Super Paper Mario|R8PP01|424
+Super Smash Bros. Brawl|RSBP01|7298
+TATSUNOKO VS. CAPCOM|STKE08|1436
+The Amazing Spider-Man|SAZE52|1942
+The House of The Dead Overkill|RHOE8P|3920
+THE LAST STORY|SLSEXJ|5162
+The Legend of Zelda Skyward Sword|SOUE01|4214
+The Legend of Zelda Twilight Princess|RZDE01|1102
+The Sims 2 Castaway|R42P69|1214
+TMNT|RTMP41|1414
+Ghost Recon|SGHP41|3000
+Tomb Raider: Underworld|RH8E4F|3244
+Tony Hawk RIDER|RX5E52|2262
+Tony Hawk's Downhill Jam|RTHE52|2488
+Tony Hawk's Proving Ground|RT9E52|2580
+Toy Story 3|STSTQ|2608
+Wario Land Shake It!|RWLE01|3798
+WarioWare: Smooth Moves|RODP01|3340
+Worms: Battle Islands|SILP78|254
+Wii Party|SUPE01|1034
+Wii Play: Motion|SC8P01|844
+Wiimms MKW-Fun|RMCE26|1618
+World Cup 2010|SFWY69|2980
+Wii Sports Resort|RZTE01|698
+WWE '13|S3XE78|4368
+WWE Smackdown! 2009|RR9E78|3988
+Xenoblade Chronicles|SX4E01|6654
+Zack and Wiki|RTZE08|1990
+Crash of the Titans|RQJE7D|3006
+SpongeBob: Truth-Sq|R8IE78|2378
+Scarface: World is Yours|RSCE7D|3970`;
+
+    const juegos = rawData.split('\n').map((l, index) => {
+        const parts = l.split('|');
+        return { index, nombre: parts[0], id: parts[1], peso: parseInt(parts[2]) };
+    });
+
+    let seleccionados = [];
+
+    function formatearPeso(mb) {
+        if (mb >= 1024) return (mb / 1024).toFixed(2) + " GB";
+        return mb + " MB";
+    }
+
+    function calcularMemoriaYPrecio(totalMB) {
+        const totalGB = totalMB / 1024;
+        if (totalGB === 0) return { memoria: "-", precio: "-" };
+        if (totalGB <= 29) return { memoria: "32 GB", precio: "$400" };
+        if (totalGB <= 58) return { memoria: "64 GB", precio: "$500" };
+        if (totalGB <= 119) return { memoria: "128 GB", precio: "$700" };
+        return { memoria: "Excedido", precio: "Consultar" };
+    }
+
+    function toggle(originalIndex) {
+        const j = juegos[originalIndex];
+        const pos = seleccionados.findIndex(s => s.id === j.id);
+        if (pos === -1) { seleccionados.push(j); } 
+        else { seleccionados.splice(pos, 1); }
+        actualizarUI();
+        filtrarYOrdenar();
+    }
+
+    function actualizarUI() {
+        const totalMB = seleccionados.reduce((acc, curr) => acc + curr.peso, 0);
+        const cantidad = seleccionados.length;
+        const minimo = 5;
+        
+        document.getElementById('cant').innerText = cantidad;
+        document.getElementById('peso-display').innerText = formatearPeso(totalMB);
+        
+        const cot = calcularMemoriaYPrecio(totalMB);
+        document.getElementById('memoria-info').innerHTML = cantidad > 0 ? `📦 SD: ${cot.memoria} | 💰 ${cot.precio}` : `Selecciona tus juegos`;
+
+        const statusMsg = document.getElementById('status-envio');
+        const btnMail = document.getElementById('btn-envio-mail');
+        const btnWsp = document.getElementById('btn-envio-wsp');
+        const btnFb = document.getElementById('btn-envio-fb');
+        
+        if (cantidad >= minimo) {
+            statusMsg.innerHTML = "✅ ¡Todo listo! ¿Por dónde prefieres enviarnos tu lista de juegos:?";
+            statusMsg.style.color = "#27ae60";
+            btnMail.disabled = false;
+            btnWsp.disabled = false;
+            btnFb.disabled = false;
+        } else {
+            const faltan = minimo - cantidad;
+            statusMsg.innerHTML = `⚠️ Faltan ${faltan} juego${faltan > 1 ? 's' : ''} más para mandar tu lista de juegos!!`;
+            statusMsg.style.color = "var(--warn)";
+            btnMail.disabled = true;
+            btnWsp.disabled = true;
+            btnFb.disabled = true;
+        }
+
+        const panel = document.getElementById('panelSeleccion');
+        const listaDiv = document.getElementById('listaDerecha');
+        const areaOculta = document.getElementById('listaOculta');
+        
+        if (cantidad > 0) {
+            panel.style.display = 'flex';
+            listaDiv.innerHTML = seleccionados.map(j => `<div class="item-mini"><span>${j.nombre}</span><button class="btn-del-mini" onclick="toggle(${j.index})">×</button></div>`).join('');
+            
+            let texto = `LISTA DE JUEGOS:\n\n`;
+            seleccionados.forEach(s => texto += `• ${s.nombre}\n`);
+            texto += `\nTotal: ${cantidad} | SD: ${cot.memoria} | Precio: ${cot.precio}`;
+            areaOculta.value = texto;
+        } else {
+            panel.style.display = 'none';
+        }
+    }
+
+    function renderizar(lista) {
+        const catalogo = document.getElementById('catalogo');
+        catalogo.innerHTML = '';
+        lista.forEach((j) => {
+            const isSelected = seleccionados.some(s => s.id === j.id);
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <div class="image-container"><img src="fotos/${j.id}.png" onerror="this.onerror=null; this.src='https://via.placeholder.com/150x200?text=Wii'"></div>
+                <div class="info"><h3>${j.nombre}</h3><span class="peso-tag">${formatearPeso(j.peso)}</span></div>
+                <button class="btn-add ${isSelected ? 'selected' : ''}" onclick="toggle(${j.index})">${isSelected ? 'Quitar' : 'Añadir'}</button>
+            `;
+            catalogo.appendChild(card);
+        });
+    }
+
+    function filtrarYOrdenar() {
+        const busqueda = document.getElementById('buscador').value.toLowerCase();
+        const orden = document.getElementById('ordenar').value;
+        let lista = juegos.filter(j => j.nombre.toLowerCase().includes(busqueda));
+        
+        if (orden === 'az') lista.sort((a, b) => a.nombre.localeCompare(b.nombre));
+        if (orden === 'za') lista.sort((a, b) => b.nombre.localeCompare(a.nombre));
+        if (orden === 'peso-asc') lista.sort((a, b) => a.peso - b.peso);
+        if (orden === 'peso-desc') lista.sort((a, b) => b.peso - a.peso);
+        
+        renderizar(lista);
+    }
+
+    function enviarPedido(via) {
+        if (seleccionados.length < 5) return;
+        const msg = document.getElementById('listaOculta').value;
+        if (via === 'wsp') {
+            window.open(`https://wa.me/${numeroTel}?text=${encodeURIComponent(msg)}`, '_blank');
+        } else {
+            navigator.clipboard.writeText(msg).then(() => {
+                alert("✅ Lista copiada. Pégala en el chat de Messenger.");
+                window.open(`https://m.me/525660427663`, '_blank'); 
+            });
+        }
+    }
+
+    function volverArriba() { window.scrollTo({top: 0, behavior: 'smooth'}); }
+    window.onscroll = function() { 
+        document.getElementById("btn-arriba").style.display = (document.documentElement.scrollTop > 400) ? "block" : "none"; 
+    };
+    
+    // Iniciar
+    filtrarYOrdenar();
+</script>
+
+</body>
+</html>
