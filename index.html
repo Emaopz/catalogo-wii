@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catálogo Wii Pro</title>
+    <title>Catálogo Wii</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
         :root { --wsp: #25d366; --dark: #1a1a1a; --blue: #0070d2; --mail: #e74c3c; --fb: #0084ff; --warn: #f39c12; }
         body { font-family: 'Segoe UI', sans-serif; background: #f4f4f4; margin: 0; padding-bottom: 200px; scroll-behavior: smooth; }
         
-        /* HEADER ULTRA COMPACTO */
         header { 
             background: var(--dark); color: white; text-align: center; 
             padding: 8px 5px; position: sticky; top: 0; z-index: 1000; 
@@ -31,7 +30,6 @@
             color: var(--dark);
         }
 
-        /* CONTENEDOR DE JUEGOS */
         .contenedor { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; padding: 10px; max-width: 1100px; margin: 0 auto; }
         
         .card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1); display: flex; flex-direction: column; border: 1px solid #eee; }
@@ -45,7 +43,6 @@
         .btn-add { background: var(--blue); color: white; border: none; padding: 8px; font-weight: bold; cursor: pointer; width: 100%; font-size: 0.8rem; }
         .btn-add.selected { background: #e74c3c; }
 
-        /* PANEL LATERAL DE SELECCIÓN */
         .panel-seleccion {
             position: fixed; right: 10px; top: 90px; width: 180px; max-height: 25vh;
             background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
@@ -56,7 +53,6 @@
         .item-mini { display: flex; justify-content: space-between; align-items: center; padding: 3px; border-bottom: 1px solid #eee; font-size: 0.6rem; }
         .btn-del-mini { color: #e74c3c; border: none; background: none; font-weight: bold; cursor: pointer; }
 
-        /* BARRA INFERIOR */
         .carrito-float { 
             position: fixed; bottom: 0; width: 100%; background: white; 
             padding: 10px 0; box-shadow: 0 -3px 15px rgba(0,0,0,0.1); 
@@ -65,11 +61,9 @@
         }
         .stats-total { font-size: 0.85rem; font-weight: bold; margin-bottom: 2px; }
         .info-pago { color: #27ae60; font-weight: 800; font-size: 0.95rem; margin-bottom: 4px; }
-        
         .aviso-minimo { font-size: 0.75rem; font-weight: 800; margin-bottom: 8px; text-align: center; }
         
         .botones-fila { display: flex; flex-direction: row; gap: 8px; width: 95%; max-width: 500px; justify-content: center; }
-        
         .btn-final { 
             flex: 1; border: none; padding: 8px 5px; border-radius: 20px; 
             font-weight: bold; color: white; font-size: 0.65rem; 
@@ -139,6 +133,8 @@
 
 <script>
     const numeroTel = "525660427663";
+    const fbUsuario = "Manuons11"; // TU USUARIO DE FACEBOOK ACTUALIZADO
+
     const rawData = `Angry Birds Trilogy|SAWP52|936
 Animal Crossing Wii|RUUE01|324
 Armageddon|RKMP5D|3930
@@ -348,14 +344,14 @@ Scarface: World is Yours|RSCE7D|3970`;
         const btnFb = document.getElementById('btn-envio-fb');
         
         if (cantidad >= minimo) {
-            statusMsg.innerHTML = "✅ ¡Todo listo! ¿Por dónde prefieres enviarnos tu lista de juegos:?";
+            statusMsg.innerHTML = "✅ ¡Lista completada! Elige el envío:";
             statusMsg.style.color = "#27ae60";
             btnMail.disabled = false;
             btnWsp.disabled = false;
             btnFb.disabled = false;
         } else {
             const faltan = minimo - cantidad;
-            statusMsg.innerHTML = `⚠️ Faltan ${faltan} juego${faltan > 1 ? 's' : ''} más para mandar tu lista de juegos!!`;
+            statusMsg.innerHTML = `⚠️ Faltan ${faltan} juego${faltan > 1 ? 's' : ''} más`;
             statusMsg.style.color = "var(--warn)";
             btnMail.disabled = true;
             btnWsp.disabled = true;
@@ -411,12 +407,14 @@ Scarface: World is Yours|RSCE7D|3970`;
     function enviarPedido(via) {
         if (seleccionados.length < 5) return;
         const msg = document.getElementById('listaOculta').value;
+        
         if (via === 'wsp') {
             window.open(`https://wa.me/${numeroTel}?text=${encodeURIComponent(msg)}`, '_blank');
         } else {
+            // FACEBOOK MESSENGER LOGIC
             navigator.clipboard.writeText(msg).then(() => {
-                alert("✅ Lista copiada. Pégala en el chat de Messenger.");
-                window.open(`https://m.me/525660427663`, '_blank'); 
+                alert("✅ Lista copiada automáticamente.\n\nAhora se abrirá Messenger. Solo debes de dejar presionado en el chat y darle a 'Pegar'.");
+                window.open(`https://m.me/${fbUsuario}`, '_blank'); 
             });
         }
     }
@@ -426,7 +424,6 @@ Scarface: World is Yours|RSCE7D|3970`;
         document.getElementById("btn-arriba").style.display = (document.documentElement.scrollTop > 400) ? "block" : "none"; 
     };
     
-    // Iniciar
     filtrarYOrdenar();
 </script>
 
