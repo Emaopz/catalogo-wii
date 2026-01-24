@@ -148,7 +148,7 @@
     const numeroTel = "525660427663";
     const fbUsuario = "Manuons11"; 
 
-    // LISTAS DE JUEGOS
+    // Aquí pegas tus juegos de Wii y GC (usando los formatos que ya tenemos)
     const juegosWiiRaw = `Angry Birds Trilogy|SAWP52|936
 Animal Crossing Wii|RUUE01|324
 Avatar|RLVE78|996
@@ -383,7 +383,13 @@ Kirby Air Ride (GC)|GKRE01|1382`;
     const rawData = juegosWiiRaw + "\n" + juegosGCRaw;
     const juegos = rawData.split('\n').map((l, index) => {
         const parts = l.split('|');
-        return { index, nombre: parts[0], id: parts[1], peso: parseInt(parts[2]) };
+        return { 
+            index, 
+            nombre: parts[0], 
+            id: parts[1], 
+            peso: parseInt(parts[2]),
+            isGC: parts[0].includes("(GC)")
+        };
     });
 
     let seleccionados = [];
@@ -460,9 +466,30 @@ Kirby Air Ride (GC)|GKRE01|1382`;
             panel.style.display = 'flex';
             listaDiv.innerHTML = seleccionados.map(j => `<div class="item-mini"><span>${j.nombre.substring(0,20)}</span><button class="btn-del-mini" onclick="toggle(${j.index})">×</button></div>`).join('');
             
+            // GENERACIÓN DEL MENSAJE CLASIFICADO
             let texto = `LISTA DE JUEGOS:\n\n`;
-            seleccionados.forEach(s => texto += `• ${s.nombre}\n`);
-            texto += `\nTotal: ${cantidad} | SD: ${cot.memoria} | Precio: ${cot.precio}`;
+            
+            const soloWii = seleccionados.filter(s => !s.isGC);
+            const soloGC = seleccionados.filter(s => s.isGC);
+
+            if(soloWii.length > 0) {
+                texto += `🎮 WII:\n`;
+                soloWii.forEach(s => texto += `• ${s.nombre}\n`);
+                texto += `\n`;
+            }
+
+            if(soloGC.length > 0) {
+                texto += `🕹️ GC:\n`;
+                soloGC.forEach(s => texto += `• ${s.nombre}\n`);
+                texto += `\n`;
+            }
+
+            texto += `--------------------------\n`;
+            texto += `📊 RESUMEN:\n`;
+            texto += `Total Juegos: ${cantidad}\n`;
+            texto += `Peso Total: ${formatearPeso(totalMB)}\n`; // AQUÍ AGREGAMOS EL PESO TOTAL
+            texto += `Memoria: ${cot.memoria} | Precio: ${cot.precio}`;
+            
             areaOculta.value = texto;
         } else {
             panel.style.display = 'none';
@@ -482,7 +509,6 @@ Kirby Air Ride (GC)|GKRE01|1382`;
             const card = document.createElement('div');
             card.className = 'card';
             
-            // FOTOS DIRECTAMENTE EN LA CARPETA FOTOS/
             let rutaImagen = `fotos/${j.id}.png`;
 
             card.innerHTML = `
@@ -507,9 +533,9 @@ Kirby Air Ride (GC)|GKRE01|1382`;
         let lista = juegos.filter(j => j.nombre.toLowerCase().includes(busqueda));
         
         if (filtroConsola === 'wii') {
-            lista = lista.filter(j => !j.nombre.includes('(GC)'));
+            lista = lista.filter(j => !j.isGC);
         } else if (filtroConsola === 'gc') {
-            lista = lista.filter(j => j.nombre.includes('(GC)'));
+            lista = lista.filter(j => j.isGC);
         }
 
         if (orden === 'az') lista.sort((a, b) => a.nombre.localeCompare(b.nombre));
@@ -528,7 +554,7 @@ Kirby Air Ride (GC)|GKRE01|1382`;
             window.open(`https://wa.me/${numeroTel}?text=${encodeURIComponent(msg)}`, '_blank');
         } else {
             navigator.clipboard.writeText(msg).then(() => {
-                alert("✅ Lista copiada automáticamente.\n\nAhora se abrirá Messenger. Solo debes de dejar presionado en el chat y darle a 'Pegar'.");
+                alert("✅ Lista copiada y clasificada.\n\nAhora se abrirá Messenger. Solo pega el mensaje en el chat.");
                 window.open(`https://m.me/${fbUsuario}`, '_blank'); 
             });
         }
