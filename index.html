@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catálogo Wii</title>
+    <title>Catálogo Wii & GC</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
         :root { --wsp: #25d366; --dark: #1a1a1a; --blue: #0070d2; --mail: #e74c3c; --fb: #0084ff; --warn: #f39c12; }
@@ -30,6 +30,12 @@
             color: var(--dark);
         }
 
+        .categorias { display: flex; justify-content: center; gap: 5px; margin-top: 8px; }
+        .btn-cat { padding: 4px 10px; border-radius: 12px; border: none; color: white; cursor: pointer; font-size: 0.65rem; font-weight: bold; }
+        .btn-all { background: #555; }
+        .btn-wii { background: var(--blue); }
+        .btn-gc { background: #5d3fd3; }
+
         .contenedor { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; padding: 10px; max-width: 1100px; margin: 0 auto; }
         
         .card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1); display: flex; flex-direction: column; border: 1px solid #eee; }
@@ -44,7 +50,7 @@
         .btn-add.selected { background: #e74c3c; }
 
         .panel-seleccion {
-            position: fixed; right: 10px; top: 90px; width: 180px; max-height: 25vh;
+            position: fixed; right: 10px; top: 125px; width: 180px; max-height: 25vh;
             background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
             display: flex; flex-direction: column; z-index: 1500; border: 2px solid var(--blue); overflow: hidden;
         }
@@ -60,6 +66,7 @@
             border-radius: 15px 15px 0 0; 
         }
         .stats-total { font-size: 0.85rem; font-weight: bold; margin-bottom: 2px; }
+        .sobra-info { font-size: 0.75rem; color: #444; margin-bottom: 4px; font-weight: 600; background: #f0f0f0; padding: 2px 10px; border-radius: 10px; }
         .info-pago { color: #27ae60; font-weight: 800; font-size: 0.95rem; margin-bottom: 4px; }
         .aviso-minimo { font-size: 0.75rem; font-weight: 800; margin-bottom: 8px; text-align: center; }
         
@@ -88,7 +95,7 @@
 <button id="btn-arriba" onclick="volverArriba()">↑</button>
 
 <header id="top">
-    <h1>🎮 CATÁLOGO WII</h1>
+    <h1>🎮 CATÁLOGO WII & GC</h1>
     <div class="controles">
         <input type="text" id="buscador" placeholder="🔍 Buscar juego..." onkeyup="filtrarYOrdenar()">
         <select id="ordenar" onchange="filtrarYOrdenar()">
@@ -97,6 +104,11 @@
             <option value="peso-asc">Peso: Menor a Mayor</option>
             <option value="peso-desc">Peso: Mayor a Menor</option>
         </select>
+    </div>
+    <div class="categorias">
+        <button class="btn-cat btn-all" onclick="filtrarConsola('todas')">TODOS</button>
+        <button class="btn-cat btn-wii" onclick="filtrarConsola('wii')">WII</button>
+        <button class="btn-cat btn-gc" onclick="filtrarConsola('gc')">GAMECUBE</button>
     </div>
 </header>
 
@@ -109,6 +121,7 @@
 
 <div class="carrito-float">
     <div class="stats-total">Juegos: <span id="cant">0</span> | <span id="peso-display">0 MB</span></div>
+    <div id="sobra-info" class="sobra-info"></div>
     <div id="memoria-info" class="info-pago">Selecciona tus juegos</div>
     
     <div id="status-envio" class="aviso-minimo" style="color: var(--warn);">⚠️ Mínimo 5 juegos para enviar</div>
@@ -133,9 +146,10 @@
 
 <script>
     const numeroTel = "525660427663";
-    const fbUsuario = "Manuons11"; // TU USUARIO DE FACEBOOK ACTUALIZADO
+    const fbUsuario = "Manuons11"; 
 
-    const rawData = `Angry Birds Trilogy|SAWP52|936
+    // LISTAS DE JUEGOS
+    const juegosWiiRaw = `Angry Birds Trilogy|SAWP52|936
 Animal Crossing Wii|RUUE01|324
 Avatar|RLVE78|996
 Back to the Future The Game|S5BPKM|1076
@@ -296,12 +310,84 @@ Crash of the Titans|RQJE7D|3006
 SpongeBob: Truth-Sq|R8IE78|2378
 Scarface: World is Yours|RSCE7D|3970`;
 
+    const juegosGCRaw = `007: Agent Under Fire (GC)|GW7E69|1382
+Capcom vs. SNK 2 EO (GC)|GCNE08|281
+Crash Bandicoot: The Wrath of Cortex (GC)|GWRX7D|1382
+Crash Nitro Kart (GC)|GCNX7D|1382
+Crash Tag Team Racing (GC)|G9PE7D|1382
+Def Jam: Fight for NY (GC)|G6NE69|1382
+Digimon Rumble Arena 2 (GC)|GDRE78|1382
+Donald Duck: Goin' Quackers (GC)|GQUE41|1382
+Dragon Ball Z: Budokai 2 (GC)|GZ2E70|1382
+Dragon Ball Z: Sagas (GC)|GZSE70|1382
+Eternal Darkness: Sanity's Requiem (GC)|GEDE01|1382
+F-Zero GX (GC)|GFZE01|1382
+FIFA 07 (GC)|G77E69|1310
+FIFA Street (GC)|GSTE69|821
+FIFA Street 2 (GC)|G2SE69|1382
+Harry Potter and the Chamber of Secrets (GC)|GHPE69|1382
+Harry Potter and the Prisoner of Azkaban (GC)|G3AE69|1382
+Harry Potter and the Sorcerer's Stone (GC)|GHSE69|1382
+Luigi's Mansion (GC)|GLME01|1382
+Mario Kart: Double Dash!! (GC)|GM4E01|1382
+Mario Party 4 (GC)|GMPX01|1382
+Mario Party 5 (GC)|GP5E01|1382
+Mario Party 6 (GC)|GP6E01|1382
+Mario Party 7 (GC)|GP7E01|1382
+Marvel Nemesis: Rise of the Imperfects (GC)|GNME69|1382
+Need for Speed: Most Wanted (GC)|GOWE69|1382
+Paper Mario: The Thousand-Year Door (GC)|G8ME01|590
+Pokémon Colosseum (GC)|GC6E01|1382
+Pokémon XD: Gale of Darkness (GC)|GXXE01|1065
+Prince of Persia: The Sands of Time (GC)|GPTE41|1382
+Prince of Persia: The Two Thrones (GC)|GTTE41|1382
+Prince of Persia: Warrior Within (GC)|GGWE41|1382
+Rayman 3: Hoodlum Havoc (GC)|GR3E41|1382
+Resident Evil (GC)|GQRE08|1382
+Resident Evil 0 (GC)|GZ2E08|1382
+Resident Evil 2 (GC)|GH2E08|1382
+Resident Evil 3: Nemesis (GC)|GLEE08|1382
+Resident Evil 4 (GC)|G4BE08|1382
+Resident Evil: Code: Veronica X (GC)|GCDX08|2775
+Sonic Adventure 2 Battle (GC)|GSNE8P|1382
+Sonic Adventure DX: Director's Cut (GC)|GADE8P|1382
+Sonic Heroes (GC)|GSHX8P|1382
+Sonic Mega Collection (GC)|GSOE8P|981
+Sonic Riders (GC)|GEXE8P|1382
+SpongeBob SquarePants: Lights, Camera, Pants! (GC)|GLPE78|1382
+SpongeBob SquarePants: Battle for Bikini Bottom (GC)|GQPE78|1382
+Star Fox Adventures (GC)|GSSE01|1382
+Star Fox: Assault (GC)|GSAE01|1382
+Super Mario Strikers (GC)|G6FE01|1382
+Super Mario Sunshine (GC)|GMSJ01|1382
+Super Smash Bros. Melee (GC)|GALE01|1382
+The Legend of Zelda: Four Swords Adventures (GC)|G4SE01|1382
+The Legend of Zelda: The Wind Waker (GC)|GZLE01|1382
+The Legend of Zelda: Twilight Princess (GC)|GZLP01|1382
+The Simpsons: Hit & Run (GC)|GHRE7D|1382
+The Simpsons: Road Rage (GC)|GRRE7D|1382
+Ultimate Spider-Man (GC)|GUSE78|1382
+Viewtiful Joe (GC)|GVJE08|1382
+Wario World (GC)|GWWP01|1382
+Cars (GC)|GCOE10|1382
+Metroid Prime (GC)|GM8E01|1382
+Metroid Prime 2: Echoes (GC)|G2ME01|1382
+Burnout (GC)|GBUE51|1382
+Burnout 2: Point of Impact (GC)|GB2E51|1382
+Metal Gear Solid: The Twin Snakes (GC)|GGSE08|2764
+Mortal Kombat: Deadly Alliance (GC)|GMKE5D|1382
+Mortal Kombat: Deception (GC)|G6DE5D|1382
+Mario Power Tennis (GC)|GOME01|1382
+Kirby Air Ride (GC)|GKRE01|1382`;
+
+    const rawData = juegosWiiRaw + "\n" + juegosGCRaw;
     const juegos = rawData.split('\n').map((l, index) => {
         const parts = l.split('|');
         return { index, nombre: parts[0], id: parts[1], peso: parseInt(parts[2]) };
     });
 
     let seleccionados = [];
+    let filtroConsola = 'todas';
 
     function formatearPeso(mb) {
         if (mb >= 1024) return (mb / 1024).toFixed(2) + " GB";
@@ -310,11 +396,11 @@ Scarface: World is Yours|RSCE7D|3970`;
 
     function calcularMemoriaYPrecio(totalMB) {
         const totalGB = totalMB / 1024;
-        if (totalGB === 0) return { memoria: "-", precio: "-" };
-        if (totalGB <= 29) return { memoria: "32 GB", precio: "$400" };
-        if (totalGB <= 58) return { memoria: "64 GB", precio: "$500" };
-        if (totalGB <= 119) return { memoria: "128 GB", precio: "$700" };
-        return { memoria: "Excedido", precio: "Consultar" };
+        if (totalGB === 0) return { memoria: "-", precio: "-", tope: 0, etiqueta: "" };
+        if (totalGB <= 29) return { memoria: "32 GB", precio: "$400", tope: 29 * 1024, etiqueta: "32 GB" };
+        if (totalGB <= 58) return { memoria: "64 GB", precio: "$500", tope: 58 * 1024, etiqueta: "64 GB" };
+        if (totalGB <= 119) return { memoria: "128 GB", precio: "$700", tope: 119 * 1024, etiqueta: "128 GB" };
+        return { memoria: "Excedido", precio: "Consultar", tope: totalMB, etiqueta: "SD" };
     }
 
     function toggle(originalIndex) {
@@ -335,6 +421,15 @@ Scarface: World is Yours|RSCE7D|3970`;
         document.getElementById('peso-display').innerText = formatearPeso(totalMB);
         
         const cot = calcularMemoriaYPrecio(totalMB);
+        const sobraDiv = document.getElementById('sobra-info');
+
+        if (cantidad > 0 && cot.memoria !== "Excedido") {
+            const sobraMB = cot.tope - totalMB;
+            sobraDiv.innerText = `Aún tienes ${formatearPeso(sobraMB)} libres para tu memoria de ${cot.etiqueta}`;
+        } else {
+            sobraDiv.innerText = "";
+        }
+
         document.getElementById('memoria-info').innerHTML = cantidad > 0 ? `📦 SD: ${cot.memoria} | 💰 ${cot.precio}` : `Selecciona tus juegos`;
 
         const statusMsg = document.getElementById('status-envio');
@@ -363,7 +458,7 @@ Scarface: World is Yours|RSCE7D|3970`;
         
         if (cantidad > 0) {
             panel.style.display = 'flex';
-            listaDiv.innerHTML = seleccionados.map(j => `<div class="item-mini"><span>${j.nombre}</span><button class="btn-del-mini" onclick="toggle(${j.index})">×</button></div>`).join('');
+            listaDiv.innerHTML = seleccionados.map(j => `<div class="item-mini"><span>${j.nombre.substring(0,20)}</span><button class="btn-del-mini" onclick="toggle(${j.index})">×</button></div>`).join('');
             
             let texto = `LISTA DE JUEGOS:\n\n`;
             seleccionados.forEach(s => texto += `• ${s.nombre}\n`);
@@ -374,6 +469,11 @@ Scarface: World is Yours|RSCE7D|3970`;
         }
     }
 
+    function filtrarConsola(tipo) {
+        filtroConsola = tipo;
+        filtrarYOrdenar();
+    }
+
     function renderizar(lista) {
         const catalogo = document.getElementById('catalogo');
         catalogo.innerHTML = '';
@@ -381,10 +481,21 @@ Scarface: World is Yours|RSCE7D|3970`;
             const isSelected = seleccionados.some(s => s.id === j.id);
             const card = document.createElement('div');
             card.className = 'card';
+            
+            // FOTOS DIRECTAMENTE EN LA CARPETA FOTOS/
+            let rutaImagen = `fotos/${j.id}.png`;
+
             card.innerHTML = `
-                <div class="image-container"><img src="fotos/${j.id}.png" onerror="this.onerror=null; this.src='https://via.placeholder.com/150x200?text=Wii'"></div>
-                <div class="info"><h3>${j.nombre}</h3><span class="peso-tag">${formatearPeso(j.peso)}</span></div>
-                <button class="btn-add ${isSelected ? 'selected' : ''}" onclick="toggle(${j.index})">${isSelected ? 'Quitar' : 'Añadir'}</button>
+                <div class="image-container">
+                    <img src="${rutaImagen}" onerror="this.onerror=null; this.src='https://via.placeholder.com/150x200?text=SIN+FOTO'">
+                </div>
+                <div class="info">
+                    <h3>${j.nombre}</h3>
+                    <span class="peso-tag">${formatearPeso(j.peso)}</span>
+                </div>
+                <button class="btn-add ${isSelected ? 'selected' : ''}" onclick="toggle(${j.index})">
+                    ${isSelected ? 'Quitar' : 'Añadir'}
+                </button>
             `;
             catalogo.appendChild(card);
         });
@@ -395,6 +506,12 @@ Scarface: World is Yours|RSCE7D|3970`;
         const orden = document.getElementById('ordenar').value;
         let lista = juegos.filter(j => j.nombre.toLowerCase().includes(busqueda));
         
+        if (filtroConsola === 'wii') {
+            lista = lista.filter(j => !j.nombre.includes('(GC)'));
+        } else if (filtroConsola === 'gc') {
+            lista = lista.filter(j => j.nombre.includes('(GC)'));
+        }
+
         if (orden === 'az') lista.sort((a, b) => a.nombre.localeCompare(b.nombre));
         if (orden === 'za') lista.sort((a, b) => b.nombre.localeCompare(a.nombre));
         if (orden === 'peso-asc') lista.sort((a, b) => a.peso - b.peso);
@@ -410,7 +527,6 @@ Scarface: World is Yours|RSCE7D|3970`;
         if (via === 'wsp') {
             window.open(`https://wa.me/${numeroTel}?text=${encodeURIComponent(msg)}`, '_blank');
         } else {
-            // FACEBOOK MESSENGER LOGIC
             navigator.clipboard.writeText(msg).then(() => {
                 alert("✅ Lista copiada automáticamente.\n\nAhora se abrirá Messenger. Solo debes de dejar presionado en el chat y darle a 'Pegar'.");
                 window.open(`https://m.me/${fbUsuario}`, '_blank'); 
